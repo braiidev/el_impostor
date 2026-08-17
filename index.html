@@ -647,7 +647,7 @@
         wordListEl.querySelectorAll(".word-edit").forEach((inp) => {
           const commit = () => {
             const i = parseInt(inp.dataset.idx, 10);
-            const val = inp.value.trim();
+            const val = sanitizeWord(inp.value);
             if (!val) {
               inp.value = WORDS[i];
               return;
@@ -671,7 +671,7 @@
       }
 
       function addWord() {
-        const val = newWordInput.value.trim();
+        const val = sanitizeWord(newWordInput.value);
         if (!val) return;
         const exists = WORDS.some((w) => w.toLowerCase() === val.toLowerCase());
         if (!exists) {
@@ -684,8 +684,13 @@
       }
 
       function maxImpostorsFor(players) {
-        // siempre deben quedar al menos 2 tripulantes
-        return Math.max(1, players - 2);
+        // Reglas de balance: la mayoría siempre debe ser tripulante
+        // 3-5 jugadores -> máx 1 impostor
+        // 6-7 jugadores -> máx 2 impostores
+        // 8-10 jugadores -> máx 3 impostores
+        if (players <= 5) return 1;
+        if (players <= 7) return 2;
+        return 3;
       }
 
       function clampImpostors() {
@@ -801,6 +806,20 @@
         return a;
       }
 
+      function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function sanitizeWord(raw) {
+        // saca tags/etiquetas y espacios de más, limita longitud igual que el input
+        return raw
+          .replace(/<[^>]*>/g, "")
+          .trim()
+          .slice(0, 20);
+      }
+
       function newGame() {
         if (WORDS.length === 0) WORDS = [...DEFAULT_WORDS];
         clampImpostors();
@@ -876,7 +895,7 @@
             ${
               isImpostor
                 ? `<div class="role-word">IMPOSTOR</div><div class="role-sub">no conocés la palabra</div>`
-                : `<div class="role-word">${currentWord}</div><div class="role-sub">tripulante</div>`
+                : `<div class="role-word">${escapeHtml(currentWord)}</div><div class="role-sub">tripulante</div>`
             }
           </div>
         </div>
@@ -898,7 +917,11 @@
         }
       }
 
+      let countdownActive = false;
+
       function startCountdown() {
+        if (countdownActive) return;
+        countdownActive = true;
         state = "countdown";
         countVal = 3;
         render();
@@ -913,6 +936,7 @@
             render();
             setTimeout(() => {
               turn++;
+              countdownActive = false;
               if (turn >= TOTAL_PLAYERS) {
                 state = "final";
               } else {
@@ -925,7 +949,7 @@
       }
 
       tapzone.addEventListener("click", () => {
-        if (state === "ready") {
+        if (state === "ready" && !countdownActive) {
           startCountdown();
         }
       });

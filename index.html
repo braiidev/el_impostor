@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>El Impostor</title>
+<style>
+  :root{
+    --bg-deep:#0a0f1e;
+    --bg-panel:#111a2e;
+    --crew:#3ddc97;
+    --crew-glow:#3ddc9755;
+    --impostor:#ff4d6d;
+    --impostor-glow:#ff4d6d55;
+    --text:#eaf0fb;
+    --muted:#7c8aa6;
+    --gold:#ffcf56;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; height:100%; overflow:hidden;
+    background:
+      radial-gradient(circle at 20% 15%, #17233f 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, #1a1230 0%, transparent 50%),
+      var(--bg-deep);
+    color:var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    user-select:none;
+    touch-action:manipulation;
+  }
+  body{display:flex; flex-direction:column; height:100vh; height:100dvh;}
+
+  /* Estrellas de fondo */
+  .stars{
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:
+      radial-gradient(1.5px 1.5px at 10% 20%, #ffffff55, transparent),
+      radial-gradient(1.5px 1.5px at 80% 10%, #ffffff40, transparent),
+      radial-gradient(1px 1px at 60% 70%, #ffffff35, transparent),
+      radial-gradient(1.5px 1.5px at 30% 85%, #ffffff45, transparent),
+      radial-gradient(1px 1px at 90% 60%, #ffffff30, transparent);
+    background-size: 100% 100%;
+  }
+
+  header{
+    position:relative; z-index:1;
+    padding:22px 20px 10px;
+    text-align:center;
+  }
+  .title{
+    font-size:15px; font-weight:900; letter-spacing:4px;
+    color:var(--muted); text-transform:uppercase;
+  }
+  .title b{color:var(--impostor);}
+
+  .dots{
+    display:flex; justify-content:center; gap:10px; margin-top:14px;
+  }
+  .dot{
+    width:12px; height:12px; border-radius:50%;
+    border:2px solid #2a3555; background:transparent;
+    transition:.3s;
+  }
+  .dot.filled{
+    background:var(--gold); border-color:var(--gold);
+    box-shadow:0 0 10px #ffcf5688;
+  }
+  .dot.current{
+    border-color:var(--crew);
+  }
+
+  main{
+    position:relative; z-index:1;
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:20px; text-align:center;
+    gap:26px;
+  }
+
+  /* PORTHOLE - elemento firma */
+  .porthole{
+    position:relative;
+    width:min(62vw, 280px); height:min(62vw, 280px);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background: radial-gradient(circle at 35% 30%, #1c2843, #0c1426 70%);
+    border:6px solid #263254;
+    box-shadow:
+      0 0 0 10px #0a0f1e,
+      0 0 0 12px #1c2843,
+      inset 0 0 40px #00000088,
+      0 20px 60px #00000066;
+    transition: border-color .3s, box-shadow .3s;
+  }
+  .porthole.pulse{
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.035); }
+  }
+  .porthole.crew-mode{
+    border-color:var(--crew);
+    box-shadow:0 0 0 10px #0a0f1e, 0 0 0 12px #1c2843, 0 0 50px var(--crew-glow), inset 0 0 30px #00000088;
+  }
+  .porthole.impostor-mode{
+    border-color:var(--impostor);
+    box-shadow:0 0 0 10px #0a0f1e, 0 0 0 12px #1c2843, 0 0 50px var(--impostor-glow), inset 0 0 30px #00000088;
+  }
+  .porthole-inner{
+    font-weight:900;
+    line-height:1.15;
+    padding:10px;
+  }
+  .count-num{
+    font-size:88px;
+    color:var(--gold);
+    text-shadow:0 0 25px #ffcf5688;
+  }
+  .ready-icon{
+    font-size:54px;
+  }
+  .ready-txt{
+    font-size:14px; color:var(--muted); font-weight:700;
+    letter-spacing:1px; margin-top:6px;
+  }
+  .role-word{
+    font-size:30px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .role-sub{
+    font-size:12px; font-weight:700; letter-spacing:2px;
+    margin-top:8px; text-transform:uppercase;
+  }
+  .crew-mode .role-sub{ color:var(--crew); }
+  .impostor-mode .role-sub{ color:var(--impostor); }
+  .crew-mode .role-word{ color:var(--text); }
+  .impostor-mode .role-word{ color:var(--impostor); font-size:26px; }
+
+  .hint{
+    font-size:14px; color:var(--muted); font-weight:600;
+    max-width:280px; line-height:1.5;
+  }
+  .hint b{color:var(--text);}
+
+  .final-title{
+    font-size:34px; font-weight:900; letter-spacing:2px;
+    color:var(--gold); text-shadow:0 0 25px #ffcf5666;
+  }
+  .final-sub{
+    font-size:14px; color:var(--muted); max-width:260px; line-height:1.5;
+  }
+
+  button.reset{
+    margin-top:6px;
+    background:linear-gradient(180deg,#1c2843,#111a2e);
+    border:2px solid var(--gold);
+    color:var(--gold);
+    font-weight:900; letter-spacing:1.5px; text-transform:uppercase;
+    font-size:14px;
+    padding:14px 28px;
+    border-radius:14px;
+    cursor:pointer;
+  }
+  button.reset:active{ transform:scale(.96); }
+
+  .tapzone{
+    position:absolute; inset:0; z-index:5;
+  }
+
+  footer{
+    position:relative; z-index:1;
+    text-align:center; padding:14px; font-size:11px; color:#3f4a6b;
+    letter-spacing:1px;
+  }
+</style>
+</head>
+<body>
+  <div class="stars"></div>
+
+  <header>
+    <div class="title">EL <b>IMPOSTOR</b></div>
+    <div class="dots" id="dots"></div>
+  </header>
+
+  <main id="main">
+    <!-- contenido dinámico via JS -->
+  </main>
+
+  <footer>PASÁ EL DISPOSITIVO SIN MOSTRAR LA PANTALLA</footer>
+
+  <div class="tapzone" id="tapzone"></div>
+
+<script>
+  const WORDS = [
+    "Perro","Gato","Pelota","Sol","Luna","Árbol","Casa","Auto","Bicicleta",
+    "Pizza","Helado","Playa","Escuela","Libro","Robot","Elefante","León",
+    "Payaso","Globo","Computadora"
+  ];
+
+  const TOTAL_PLAYERS = 4;
+  const main = document.getElementById('main');
+  const tapzone = document.getElementById('tapzone');
+  const dotsEl = document.getElementById('dots');
+
+  let currentWord = "";
+  let assignments = []; // array de 4: "impostor" | "crew"
+  let turn = 0;          // 0..3 -> jugador actual
+  let state = "ready";   // ready | countdown | reveal | final
+  let countVal = 3;
+
+  function shuffle(arr){
+    const a = [...arr];
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  function newGame(){
+    currentWord = WORDS[Math.floor(Math.random()*WORDS.length)];
+    assignments = shuffle(["impostor","crew","crew","crew"]);
+    turn = 0;
+    state = "ready";
+    render();
+  }
+
+  function renderDots(){
+    dotsEl.innerHTML = "";
+    for(let i=0;i<TOTAL_PLAYERS;i++){
+      const d = document.createElement('div');
+      d.className = "dot";
+      if(i < turn) d.classList.add("filled");
+      else if(i === turn && state !== "final") d.classList.add("current");
+      dotsEl.appendChild(d);
+    }
+  }
+
+  function render(){
+    renderDots();
+    main.innerHTML = "";
+
+    if(state === "ready"){
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `
+        <div class="porthole pulse" id="porthole">
+          <div class="porthole-inner">
+            <div class="ready-icon">👆</div>
+            <div class="ready-txt">TOCÁ PARA<br>REVELAR</div>
+          </div>
+        </div>
+      `;
+      main.appendChild(wrap);
+      const hint = document.createElement('div');
+      hint.className = "hint";
+      hint.innerHTML = turn === 0
+        ? `Jugador <b>${turn+1}/${TOTAL_PLAYERS}</b>: tocá la pantalla y esperá el conteo.`
+        : `Dispositivo pasado. Jugador <b>${turn+1}/${TOTAL_PLAYERS}</b>: tocá la pantalla.`;
+      main.appendChild(hint);
+      tapzone.style.pointerEvents = "auto";
+    }
+
+    if(state === "countdown"){
+      main.innerHTML = `
+        <div class="porthole">
+          <div class="porthole-inner">
+            <div class="count-num" id="countNum">${countVal}</div>
+          </div>
+        </div>
+        <div class="hint">No muestres la pantalla a nadie más...</div>
+      `;
+      tapzone.style.pointerEvents = "none";
+    }
+
+    if(state === "reveal"){
+      const isImpostor = assignments[turn] === "impostor";
+      const modeClass = isImpostor ? "impostor-mode" : "crew-mode";
+      main.innerHTML = `
+        <div class="porthole ${modeClass}">
+          <div class="porthole-inner">
+            ${isImpostor
+              ? `<div class="role-word">IMPOSTOR</div><div class="role-sub">no conocés la palabra</div>`
+              : `<div class="role-word">${currentWord}</div><div class="role-sub">tripulante</div>`}
+          </div>
+        </div>
+        <div class="hint">Memorizá tu rol. El mensaje se oculta solo.</div>
+      `;
+      tapzone.style.pointerEvents = "none";
+    }
+
+    if(state === "final"){
+      main.innerHTML = `
+        <div class="final-title">DESCUBRANLO</div>
+        <div class="final-sub">Todos ya conocen su rol. Empiecen a hablar y encuentren al impostor.</div>
+        <button class="reset" id="resetBtn">Reiniciar juego</button>
+      `;
+      tapzone.style.pointerEvents = "none";
+      document.getElementById('resetBtn').addEventListener('click', newGame);
+    }
+  }
+
+  function startCountdown(){
+    state = "countdown";
+    countVal = 3;
+    render();
+    const iv = setInterval(()=>{
+      countVal--;
+      if(countVal > 0){
+        const el = document.getElementById('countNum');
+        if(el) el.textContent = countVal;
+      } else {
+        clearInterval(iv);
+        state = "reveal";
+        render();
+        setTimeout(()=>{
+          turn++;
+          if(turn >= TOTAL_PLAYERS){
+            state = "final";
+          } else {
+            state = "ready";
+          }
+          render();
+        }, 3000);
+      }
+    }, 1000);
+  }
+
+  tapzone.addEventListener('click', ()=>{
+    if(state === "ready"){
+      startCountdown();
+    }
+  });
+
+  newGame();
+</script>
+</body>
+</html>

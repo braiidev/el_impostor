@@ -1,861 +1,755 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-    />
-    <title>El Impostor</title>
-    <style>
-      :root {
-        --bg-deep: #0a0f1e;
-        --bg-panel: #111a2e;
-        --crew: #3ddc97;
-        --crew-glow: #3ddc9755;
-        --impostor: #ff4d6d;
-        --impostor-glow: #ff4d6d55;
-        --text: #eaf0fb;
-        --muted: #7c8aa6;
-        --gold: #ffcf56;
-      }
-      * {
-        box-sizing: border-box;
-        -webkit-tap-highlight-color: transparent;
-      }
-      html,
-      body {
-        margin: 0;
-        height: 100%;
-        overflow: hidden;
-        background:
-          radial-gradient(circle at 20% 15%, #17233f 0%, transparent 45%),
-          radial-gradient(circle at 85% 80%, #1a1230 0%, transparent 50%),
-          var(--bg-deep);
-        color: var(--text);
-        font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-        user-select: none;
-        touch-action: manipulation;
-      }
-      body {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        height: 100dvh;
-      }
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>El Impostor</title>
+<style>
+  :root{
+    --bg-deep:#0a0f1e;
+    --bg-panel:#111a2e;
+    --crew:#3ddc97;
+    --crew-glow:#3ddc9755;
+    --impostor:#ff4d6d;
+    --impostor-glow:#ff4d6d55;
+    --text:#eaf0fb;
+    --muted:#7c8aa6;
+    --gold:#ffcf56;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; height:100%; overflow:hidden;
+    background:
+      radial-gradient(circle at 20% 15%, #17233f 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, #1a1230 0%, transparent 50%),
+      var(--bg-deep);
+    color:var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    user-select:none;
+    touch-action:manipulation;
+  }
+  body{display:flex; flex-direction:column; height:100vh; height:100dvh;}
 
-      /* Estrellas de fondo */
-      .stars {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        z-index: 0;
-        background-image:
-          radial-gradient(1.5px 1.5px at 10% 20%, #ffffff55, transparent),
-          radial-gradient(1.5px 1.5px at 80% 10%, #ffffff40, transparent),
-          radial-gradient(1px 1px at 60% 70%, #ffffff35, transparent),
-          radial-gradient(1.5px 1.5px at 30% 85%, #ffffff45, transparent),
-          radial-gradient(1px 1px at 90% 60%, #ffffff30, transparent);
-        background-size: 100% 100%;
-      }
+  /* Estrellas de fondo */
+  .stars{
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:
+      radial-gradient(1.5px 1.5px at 10% 20%, #ffffff55, transparent),
+      radial-gradient(1.5px 1.5px at 80% 10%, #ffffff40, transparent),
+      radial-gradient(1px 1px at 60% 70%, #ffffff35, transparent),
+      radial-gradient(1.5px 1.5px at 30% 85%, #ffffff45, transparent),
+      radial-gradient(1px 1px at 90% 60%, #ffffff30, transparent);
+    background-size: 100% 100%;
+  }
 
-      header {
-        position: relative;
-        z-index: 1;
-        padding: 22px 20px 10px;
-        text-align: center;
-      }
-      .title {
-        font-size: 15px;
-        font-weight: 900;
-        letter-spacing: 4px;
-        color: var(--muted);
-        text-transform: uppercase;
-      }
-      .title b {
-        color: var(--impostor);
-      }
+  header{
+    position:relative; z-index:1;
+    padding:22px 20px 10px;
+    text-align:center;
+  }
+  .title{
+    font-size:15px; font-weight:900; letter-spacing:4px;
+    color:var(--muted); text-transform:uppercase;
+  }
+  .title b{color:var(--impostor);}
 
-      .dots {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 14px;
-        max-width: 280px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-      .dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        border: 2px solid #2a3555;
-        background: transparent;
-        transition: 0.3s;
-      }
-      .dot.filled {
-        background: var(--gold);
-        border-color: var(--gold);
-        box-shadow: 0 0 10px #ffcf5688;
-      }
-      .dot.current {
-        border-color: var(--crew);
-      }
+  .dots{
+    display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin-top:14px;
+    max-width:280px; margin-left:auto; margin-right:auto;
+  }
+  .dot{
+    width:10px; height:10px; border-radius:50%;
+    border:2px solid #2a3555; background:transparent;
+    transition:.3s;
+  }
+  .dot.filled{
+    background:var(--gold); border-color:var(--gold);
+    box-shadow:0 0 10px #ffcf5688;
+  }
+  .dot.current{
+    border-color:var(--crew);
+  }
 
-      main {
-        position: relative;
-        z-index: 1;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-        text-align: center;
-        gap: 26px;
-      }
+  main{
+    position:relative; z-index:1;
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:20px; text-align:center;
+    gap:26px;
+  }
 
-      /* PORTHOLE - elemento firma */
-      .porthole {
-        position: relative;
-        width: min(62vw, 280px);
-        height: min(62vw, 280px);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: radial-gradient(circle at 35% 30%, #1c2843, #0c1426 70%);
-        border: 6px solid #263254;
-        box-shadow:
-          0 0 0 10px #0a0f1e,
-          0 0 0 12px #1c2843,
-          inset 0 0 40px #00000088,
-          0 20px 60px #00000066;
-        transition:
-          border-color 0.3s,
-          box-shadow 0.3s;
-      }
-      .porthole.pulse {
-        animation: pulse 1.4s ease-in-out infinite;
-      }
-      @keyframes pulse {
-        0%,
-        100% {
-          transform: scale(1);
-        }
-        50% {
-          transform: scale(1.035);
-        }
-      }
-      .porthole.crew-mode {
-        border-color: var(--crew);
-        box-shadow:
-          0 0 0 10px #0a0f1e,
-          0 0 0 12px #1c2843,
-          0 0 50px var(--crew-glow),
-          inset 0 0 30px #00000088;
-      }
-      .porthole.impostor-mode {
-        border-color: var(--impostor);
-        box-shadow:
-          0 0 0 10px #0a0f1e,
-          0 0 0 12px #1c2843,
-          0 0 50px var(--impostor-glow),
-          inset 0 0 30px #00000088;
-      }
-      .porthole-inner {
-        font-weight: 900;
-        line-height: 1.15;
-        padding: 10px;
-      }
-      .count-num {
-        font-size: 88px;
-        color: var(--gold);
-        text-shadow: 0 0 25px #ffcf5688;
-      }
-      .ready-icon {
-        font-size: 54px;
-      }
-      .ready-txt {
-        font-size: 14px;
-        color: var(--muted);
-        font-weight: 700;
-        letter-spacing: 1px;
-        margin-top: 6px;
-      }
-      .role-word {
-        font-size: 30px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
-      .role-sub {
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        margin-top: 8px;
-        text-transform: uppercase;
-      }
-      .crew-mode .role-sub {
-        color: var(--crew);
-      }
-      .impostor-mode .role-sub {
-        color: var(--impostor);
-      }
-      .crew-mode .role-word {
-        color: var(--text);
-      }
-      .impostor-mode .role-word {
-        color: var(--impostor);
-        font-size: 26px;
-      }
+  /* PORTHOLE - elemento firma */
+  .porthole{
+    position:relative;
+    width:min(62vw, 280px); height:min(62vw, 280px);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background: radial-gradient(circle at 35% 30%, #1c2843, #0c1426 70%);
+    border:6px solid #263254;
+    box-shadow:
+      0 0 0 10px #0a0f1e,
+      0 0 0 12px #1c2843,
+      inset 0 0 40px #00000088,
+      0 20px 60px #00000066;
+    transition: border-color .3s, box-shadow .3s;
+  }
+  .porthole.pulse{
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.035); }
+  }
+  .porthole.crew-mode{
+    border-color:var(--crew);
+    box-shadow:0 0 0 10px #0a0f1e, 0 0 0 12px #1c2843, 0 0 50px var(--crew-glow), inset 0 0 30px #00000088;
+  }
+  .porthole.impostor-mode{
+    border-color:var(--impostor);
+    box-shadow:0 0 0 10px #0a0f1e, 0 0 0 12px #1c2843, 0 0 50px var(--impostor-glow), inset 0 0 30px #00000088;
+  }
+  .porthole-inner{
+    font-weight:900;
+    line-height:1.15;
+    padding:10px;
+  }
+  .count-num{
+    font-size:88px;
+    color:var(--gold);
+    text-shadow:0 0 25px #ffcf5688;
+  }
+  .ready-icon{
+    font-size:54px;
+  }
+  .ready-txt{
+    font-size:14px; color:var(--muted); font-weight:700;
+    letter-spacing:1px; margin-top:6px;
+  }
+  .role-word{
+    font-size:30px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .role-sub{
+    font-size:12px; font-weight:700; letter-spacing:2px;
+    margin-top:8px; text-transform:uppercase;
+  }
+  .crew-mode .role-sub{ color:var(--crew); }
+  .impostor-mode .role-sub{ color:var(--impostor); }
+  .crew-mode .role-word{ color:var(--text); }
+  .impostor-mode .role-word{ color:var(--impostor); font-size:26px; }
 
-      .hint {
-        font-size: 14px;
-        color: var(--muted);
-        font-weight: 600;
-        max-width: 280px;
-        line-height: 1.5;
-      }
-      .hint b {
-        color: var(--text);
-      }
+  .reveal-timer{
+    margin-top:14px;
+    width:26px; height:26px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    margin-left:auto; margin-right:auto;
+    background:#0c1426; border:1.5px solid #263254;
+    font-size:13px; font-weight:900; color:var(--gold);
+  }
 
-      .final-title {
-        font-size: 34px;
-        font-weight: 900;
-        letter-spacing: 2px;
-        color: var(--gold);
-        text-shadow: 0 0 25px #ffcf5666;
-      }
-      .final-sub {
-        font-size: 14px;
-        color: var(--muted);
-        max-width: 260px;
-        line-height: 1.5;
-      }
+  .hint{
+    font-size:14px; color:var(--muted); font-weight:600;
+    max-width:280px; line-height:1.5;
+  }
+  .hint b{color:var(--text);}
 
-      button.reset {
-        margin-top: 6px;
-        background: linear-gradient(180deg, #1c2843, #111a2e);
-        border: 2px solid var(--gold);
-        color: var(--gold);
-        font-weight: 900;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        font-size: 14px;
-        padding: 14px 28px;
-        border-radius: 14px;
-        cursor: pointer;
-      }
-      button.reset:active {
-        transform: scale(0.96);
-      }
+  .final-title{
+    font-size:34px; font-weight:900; letter-spacing:2px;
+    color:var(--gold); text-shadow:0 0 25px #ffcf5666;
+  }
+  .final-sub{
+    font-size:14px; color:var(--muted); max-width:260px; line-height:1.5;
+  }
+  .final-pattern{
+    font-family: "Courier New", monospace;
+    font-size:13px; font-weight:800; letter-spacing:1px;
+    color:var(--text); background:#0c1426; border:1px solid #202b48;
+    border-radius:10px; padding:8px 14px;
+  }
+  .pip{ font-family: "Courier New", monospace; }
+  .pip.imp{ color:var(--impostor); }
+  .pip.crew{ color:var(--muted); }
 
-      .tapzone {
-        position: absolute;
-        inset: 0;
-        z-index: 5;
-      }
+  button.reset{
+    margin-top:6px;
+    background:linear-gradient(180deg,#1c2843,#111a2e);
+    border:2px solid var(--gold);
+    color:var(--gold);
+    font-weight:900; letter-spacing:1.5px; text-transform:uppercase;
+    font-size:14px;
+    padding:14px 28px;
+    border-radius:14px;
+    cursor:pointer;
+  }
+  button.reset:active{ transform:scale(.96); }
 
-      footer {
-        position: relative;
-        z-index: 1;
-        text-align: center;
-        padding: 14px;
-        font-size: 11px;
-        color: #3f4a6b;
-        letter-spacing: 1px;
-      }
+  .tapzone{
+    position:absolute; inset:0; z-index:5;
+  }
 
-      /* Botón de ajustes */
-      .gear-btn {
-        position: fixed;
-        top: 16px;
-        right: 16px;
-        z-index: 20;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: #111a2e;
-        border: 2px solid #2a3555;
-        color: var(--muted);
-        font-size: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-      }
-      .gear-btn:active {
-        transform: scale(0.92);
-      }
+  footer{
+    position:relative; z-index:1;
+    text-align:center; padding:14px; font-size:11px; color:#3f4a6b;
+    letter-spacing:1px;
+  }
 
-      /* Panel de palabras */
-      .overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 50;
-        background: #060a15ee;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-      }
-      .overlay.open {
-        display: flex;
-      }
-      .panel {
-        width: 100%;
-        max-width: 380px;
-        max-height: 82vh;
-        background: var(--bg-panel);
-        border: 2px solid #263254;
-        border-radius: 18px;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        box-shadow: 0 20px 60px #00000088;
-      }
-      .panel h2 {
-        margin: 0;
-        font-size: 16px;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        color: var(--gold);
-        text-align: center;
-      }
-      .panel-sub {
-        font-size: 12px;
-        color: var(--muted);
-        text-align: center;
-        margin-top: -8px;
-      }
-      .word-list {
-        overflow-y: auto;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        padding-right: 4px;
-      }
-      .word-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: #0c1426;
-        border: 1px solid #202b48;
-        border-radius: 10px;
-        padding: 4px 6px 4px 12px;
-        font-size: 14px;
-        font-weight: 600;
-      }
-      .word-row .word-edit {
-        flex: 1;
-        background: transparent;
-        border: none;
-        outline: none;
-        color: var(--text);
-        font-size: 14px;
-        font-weight: 600;
-        font-family: inherit;
-        padding: 8px 4px;
-      }
-      .word-row .word-edit:focus {
-        color: var(--crew);
-      }
-      .word-row .del {
-        background: none;
-        border: none;
-        color: var(--impostor);
-        font-size: 16px;
-        font-weight: 900;
-        cursor: pointer;
-        padding: 2px 8px;
-      }
-      .add-row {
-        display: flex;
-        gap: 8px;
-      }
-      .add-row input {
-        flex: 1;
-        background: #0c1426;
-        border: 1px solid #263254;
-        border-radius: 10px;
-        color: var(--text);
-        font-size: 14px;
-        padding: 10px 12px;
-        outline: none;
-      }
-      .add-row input:focus {
-        border-color: var(--crew);
-      }
-      .add-row button {
-        background: var(--crew);
-        border: none;
-        color: #062018;
-        font-weight: 900;
-        border-radius: 10px;
-        padding: 0 16px;
-        font-size: 14px;
-        cursor: pointer;
-      }
-      .panel-actions {
-        display: flex;
-        gap: 10px;
-      }
-      .panel-actions button {
-        flex: 1;
-        padding: 12px;
-        border-radius: 12px;
-        font-weight: 800;
-        font-size: 13px;
-        letter-spacing: 0.5px;
-        cursor: pointer;
-        text-transform: uppercase;
-      }
-      .btn-close {
-        background: linear-gradient(180deg, #1c2843, #111a2e);
-        border: 2px solid var(--gold);
-        color: var(--gold);
-      }
-      .btn-restore {
-        background: none;
-        border: 2px solid #3a4568;
-        color: var(--muted);
-      }
-      .empty-msg {
-        text-align: center;
-        color: var(--muted);
-        font-size: 13px;
-        padding: 20px 0;
-      }
+  /* Botón de ajustes */
+  .gear-btn{
+    position:fixed; top:16px; right:16px; z-index:20;
+    width:40px; height:40px; border-radius:50%;
+    background:#111a2e; border:2px solid #2a3555;
+    color:var(--muted); font-size:18px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .gear-btn:active{ transform:scale(.92); }
 
-      .stepper-section {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        padding-bottom: 6px;
-        border-bottom: 1px solid #1c2843;
-      }
-      .stepper-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-      }
-      .stepper-label {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-      .stepper-label span {
-        font-size: 14px;
-        font-weight: 800;
-      }
-      .stepper-label small {
-        font-size: 10.5px;
-        color: var(--muted);
-        letter-spacing: 0.3px;
-      }
-      .stepper {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        background: #0c1426;
-        border: 1px solid #263254;
-        border-radius: 12px;
-        padding: 4px;
-      }
-      .step-btn {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        background: #1c2843;
-        border: none;
-        color: var(--text);
-        font-size: 18px;
-        font-weight: 900;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .step-btn:active {
-        transform: scale(0.9);
-      }
-      .step-btn:disabled {
-        opacity: 0.3;
-        cursor: default;
-      }
-      .step-val {
-        min-width: 22px;
-        text-align: center;
-        font-size: 16px;
-        font-weight: 900;
-        color: var(--gold);
-      }
-      .stepper-hint {
-        font-size: 11px;
-        color: var(--impostor);
-        text-align: center;
-        min-height: 14px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="stars"></div>
+  /* Panel de palabras */
+  .overlay{
+    position:fixed; inset:0; z-index:50;
+    background:#060a15ee;
+    display:none;
+    align-items:center; justify-content:center;
+    padding:20px;
+  }
+  .overlay.open{ display:flex; }
+  .panel{
+    width:100%; max-width:380px; max-height:86vh;
+    background:var(--bg-panel);
+    border:2px solid #263254;
+    border-radius:18px;
+    padding:20px;
+    display:flex; flex-direction:column; gap:14px;
+    box-shadow:0 20px 60px #00000088;
+    overflow-y:auto;
+  }
+  .panel h2{
+    margin:0; font-size:16px; letter-spacing:1.5px;
+    text-transform:uppercase; color:var(--gold);
+    text-align:center;
+  }
+  .panel-sub{
+    font-size:12px; color:var(--muted); text-align:center; margin-top:-8px;
+  }
+  .word-list{
+    overflow-y:auto; max-height:220px;
+    display:flex; flex-direction:column; gap:8px;
+    padding-right:4px;
+  }
+  .word-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:#0c1426; border:1px solid #202b48;
+    border-radius:10px; padding:4px 6px 4px 12px;
+    font-size:14px; font-weight:600;
+  }
+  .word-row .word-edit{
+    flex:1; background:transparent; border:none; outline:none;
+    color:var(--text); font-size:14px; font-weight:600;
+    font-family:inherit; padding:8px 4px;
+  }
+  .word-row .word-edit:focus{ color:var(--crew); }
+  .word-row .del{
+    background:none; border:none; color:var(--impostor);
+    font-size:16px; font-weight:900; cursor:pointer;
+    padding:2px 8px;
+  }
+  .add-row{
+    display:flex; gap:8px;
+  }
+  .add-row input{
+    flex:1; background:#0c1426; border:1px solid #263254;
+    border-radius:10px; color:var(--text); font-size:14px;
+    padding:10px 12px; outline:none;
+  }
+  .add-row input:focus{ border-color:var(--crew); }
+  .add-row button{
+    background:var(--crew); border:none; color:#062018;
+    font-weight:900; border-radius:10px; padding:0 16px;
+    font-size:14px; cursor:pointer;
+  }
+  .panel-actions{
+    display:flex; gap:10px;
+  }
+  .panel-actions button{
+    flex:1; padding:12px; border-radius:12px; font-weight:800;
+    font-size:13px; letter-spacing:.5px; cursor:pointer;
+    text-transform:uppercase;
+  }
+  .btn-close{
+    background:linear-gradient(180deg,#1c2843,#111a2e);
+    border:2px solid var(--gold); color:var(--gold);
+  }
+  .btn-restore{
+    background:none; border:2px solid #3a4568; color:var(--muted);
+  }
+  .empty-msg{
+    text-align:center; color:var(--muted); font-size:13px; padding:20px 0;
+  }
 
-    <button class="gear-btn" id="gearBtn" title="Palabras">⚙</button>
+  .stepper-section{
+    display:flex; flex-direction:column; gap:12px;
+    padding-bottom:6px; border-bottom:1px solid #1c2843;
+  }
+  .stepper-row{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px;
+  }
+  .stepper-label{
+    display:flex; flex-direction:column; gap:2px;
+  }
+  .stepper-label span{ font-size:14px; font-weight:800; }
+  .stepper-label small{ font-size:10.5px; color:var(--muted); letter-spacing:.3px; }
+  .stepper{
+    display:flex; align-items:center; gap:10px;
+    background:#0c1426; border:1px solid #263254;
+    border-radius:12px; padding:4px;
+  }
+  .step-btn{
+    width:32px; height:32px; border-radius:8px;
+    background:#1c2843; border:none; color:var(--text);
+    font-size:18px; font-weight:900; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .step-btn:active{ transform:scale(.9); }
+  .step-btn:disabled{ opacity:.3; cursor:default; }
+  .step-val{
+    min-width:22px; text-align:center;
+    font-size:16px; font-weight:900; color:var(--gold);
+  }
+  .stepper-hint{
+    font-size:11px; color:var(--impostor); text-align:center;
+    min-height:14px;
+  }
 
-    <header>
-      <div class="title">EL <b>IMPOSTOR</b></div>
-      <div class="dots" id="dots"></div>
-    </header>
+  .roulette-row{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; padding-bottom:6px; border-bottom:1px solid #1c2843;
+  }
+  .btn-roulette{
+    background:linear-gradient(180deg,#2a1830,#1a1022);
+    border:2px solid var(--impostor); color:var(--impostor);
+    font-weight:800; font-size:12px; letter-spacing:.5px;
+    text-transform:uppercase; border-radius:10px;
+    padding:10px 12px; cursor:pointer; white-space:nowrap;
+  }
+  .btn-roulette:active{ transform:scale(.95); }
 
-    <main id="main">
-      <!-- contenido dinámico via JS -->
-    </main>
+  .word-row.used{ opacity:.55; }
+  .word-used{
+    flex:1; padding:8px 4px;
+    text-decoration:line-through; color:var(--muted);
+    font-size:14px; font-weight:600;
+  }
 
-    <footer>PASÁ EL DISPOSITIVO SIN MOSTRAR LA PANTALLA</footer>
+  .history-block h2{ margin-top:2px; }
+  .hist-list{
+    max-height:150px; overflow-y:auto;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .hist-row{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px; background:#0c1426; border:1px solid #202b48;
+    border-radius:8px; padding:8px 10px;
+    font-size:12.5px; font-weight:700;
+  }
+  .hist-row .hist-word{ color:var(--text); }
+  .hist-empty{
+    text-align:center; color:var(--muted); font-size:12px; padding:10px 0;
+  }
+</style>
+</head>
+<body>
+  <div class="stars"></div>
 
-    <div class="tapzone" id="tapzone"></div>
+  <button class="gear-btn" id="gearBtn" title="Palabras">⚙</button>
 
-    <div class="overlay" id="overlay">
-      <div class="panel">
-        <h2>Ajustes</h2>
+  <header>
+    <div class="title">EL <b>IMPOSTOR</b></div>
+    <div class="dots" id="dots"></div>
+  </header>
 
-        <div class="stepper-section">
-          <div class="stepper-row">
-            <div class="stepper-label">
-              <span>Jugadores</span>
-              <small>mínimo 3 · máximo 10</small>
-            </div>
-            <div class="stepper">
-              <button class="step-btn" id="playersMinus">−</button>
-              <span class="step-val" id="playersVal">4</span>
-              <button class="step-btn" id="playersPlus">+</button>
-            </div>
+  <main id="main">
+    <!-- contenido dinámico via JS -->
+  </main>
+
+  <footer>PASÁ EL DISPOSITIVO SIN MOSTRAR LA PANTALLA</footer>
+
+  <div class="tapzone" id="tapzone"></div>
+
+  <div class="overlay" id="overlay">
+    <div class="panel">
+      <h2>Ajustes</h2>
+
+      <div class="stepper-section">
+        <div class="stepper-row">
+          <div class="stepper-label">
+            <span>Jugadores</span>
+            <small>mínimo 3 · máximo 10</small>
           </div>
-          <div class="stepper-row">
-            <div class="stepper-label">
-              <span>Impostores</span>
-              <small id="impostorRange">mínimo 1 · máximo 2</small>
-            </div>
-            <div class="stepper">
-              <button class="step-btn" id="impostorsMinus">−</button>
-              <span class="step-val" id="impostorsVal">1</span>
-              <button class="step-btn" id="impostorsPlus">+</button>
-            </div>
+          <div class="stepper">
+            <button class="step-btn" id="playersMinus">−</button>
+            <span class="step-val" id="playersVal">4</span>
+            <button class="step-btn" id="playersPlus">+</button>
           </div>
-          <div class="stepper-hint" id="stepperHint"></div>
         </div>
+        <div class="stepper-row">
+          <div class="stepper-label">
+            <span>Impostores</span>
+            <small id="impostorRange">mínimo 1 · máximo 2</small>
+          </div>
+          <div class="stepper">
+            <button class="step-btn" id="impostorsMinus">−</button>
+            <span class="step-val" id="impostorsVal">1</span>
+            <button class="step-btn" id="impostorsPlus">+</button>
+          </div>
+        </div>
+        <div class="stepper-hint" id="stepperHint"></div>
+      </div>
 
-        <h2>Palabras</h2>
-        <div class="panel-sub" id="wordCount">20 palabras</div>
-        <div class="word-list" id="wordList"></div>
-        <div class="add-row">
-          <input
-            type="text"
-            id="newWordInput"
-            placeholder="Nueva palabra..."
-            maxlength="20"
-          />
-          <button id="addWordBtn">Agregar</button>
+      <div class="roulette-row">
+        <div class="stepper-label">
+          <span>Ruleta</span>
+          <small id="rouletteCount">0/50 usadas</small>
         </div>
-        <div class="panel-actions">
-          <button class="btn-restore" id="restoreBtn">Restaurar</button>
-          <button class="btn-close" id="closeBtn">Cerrar</button>
-        </div>
+        <button class="btn-roulette" id="rouletteBtn">Reiniciar ruleta</button>
+      </div>
+
+      <h2>Palabras</h2>
+      <div class="panel-sub" id="wordCount">20 palabras</div>
+      <div class="word-list" id="wordList"></div>
+      <div class="add-row">
+        <input type="text" id="newWordInput" placeholder="Nueva palabra..." maxlength="20">
+        <button id="addWordBtn">Agregar</button>
+      </div>
+
+      <div class="history-block" id="historyBlock">
+        <h2>Historial</h2>
+        <div class="hist-list" id="histList"></div>
+      </div>
+
+      <div class="panel-actions">
+        <button class="btn-restore" id="restoreBtn">Restaurar</button>
+        <button class="btn-close" id="closeBtn">Cerrar</button>
       </div>
     </div>
+  </div>
 
-    <script>
-      const DEFAULT_WORDS = [
-        "Perro",
-        "Gato",
-        "Pelota",
-        "Sol",
-        "Luna",
-        "Árbol",
-        "Casa",
-        "Auto",
-        "Bicicleta",
-        "Pizza",
-        "Helado",
-        "Playa",
-        "Escuela",
-        "Libro",
-        "Robot",
-        "Elefante",
-        "León",
-        "Payaso",
-        "Globo",
-        "Computadora",
-      ];
-      let WORDS = [...DEFAULT_WORDS];
-      const hasStorage = typeof window.storage !== "undefined";
+<script>
+  const DEFAULT_WORDS = [
+    "Perro","Gato","Pelota","Sol","Luna","Árbol","Casa","Auto","Bicicleta",
+    "Pizza","Helado","Playa","Escuela","Libro","Robot","Elefante","León",
+    "Payaso","Globo","Computadora","Dinosaurio","Cohete","Princesa","Dragón",
+    "Superhéroe","Mariposa","Tortuga","Delfín","Jirafa","Mono","Tiburón",
+    "Castillo","Bruja","Fantasma","Vampiro","Momia","Sirena","Unicornio",
+    "Nave espacial","Astronauta","Guitarra","Piano","Fútbol","Basquetbol",
+    "Patineta","Cometa","Arcoíris","Nube","Volcán","Isla"
+  ];
+  let WORDS = [...DEFAULT_WORDS];
+  const hasStorage = typeof window.storage !== "undefined";
 
-      const MIN_PLAYERS = 3,
-        MAX_PLAYERS = 10;
-      let TOTAL_PLAYERS = 4;
-      let IMPOSTOR_COUNT = 1;
-      const main = document.getElementById("main");
-      const tapzone = document.getElementById("tapzone");
-      const dotsEl = document.getElementById("dots");
-      const gearBtn = document.getElementById("gearBtn");
-      const overlay = document.getElementById("overlay");
-      const wordListEl = document.getElementById("wordList");
-      const wordCountEl = document.getElementById("wordCount");
-      const newWordInput = document.getElementById("newWordInput");
+  const MIN_PLAYERS = 3, MAX_PLAYERS = 10;
+  let TOTAL_PLAYERS = 4;
+  let IMPOSTOR_COUNT = 1;
+  const main = document.getElementById('main');
+  const tapzone = document.getElementById('tapzone');
+  const dotsEl = document.getElementById('dots');
+  const gearBtn = document.getElementById('gearBtn');
+  const overlay = document.getElementById('overlay');
+  const wordListEl = document.getElementById('wordList');
+  const wordCountEl = document.getElementById('wordCount');
+  const newWordInput = document.getElementById('newWordInput');
 
-      // --- Persistencia de palabras ---
-      async function loadWords() {
-        if (!hasStorage) return;
-        try {
-          const res = await window.storage.get("words", false);
-          if (res && res.value) {
-            const parsed = JSON.parse(res.value);
-            if (Array.isArray(parsed) && parsed.length > 0) WORDS = parsed;
-          }
-        } catch (e) {
-          // no hay palabras guardadas todavía, se usan las por defecto
-        }
+  // --- Persistencia de palabras ---
+  async function loadWords(){
+    if(!hasStorage) return;
+    try{
+      const res = await window.storage.get('words', false);
+      if(res && res.value){
+        const parsed = JSON.parse(res.value);
+        if(Array.isArray(parsed) && parsed.length > 0) WORDS = parsed;
       }
-      async function saveWords() {
-        if (!hasStorage) return;
-        try {
-          await window.storage.set("words", JSON.stringify(WORDS), false);
-        } catch (e) {
-          console.error("No se pudo guardar la lista", e);
-        }
-      }
+    }catch(e){
+      // no hay palabras guardadas todavía, se usan las por defecto
+    }
+  }
+  async function saveWords(){
+    if(!hasStorage) return;
+    try{
+      await window.storage.set('words', JSON.stringify(WORDS), false);
+    }catch(e){
+      console.error('No se pudo guardar la lista', e);
+    }
+  }
 
-      function renderWordPanel() {
-        wordCountEl.textContent = `${WORDS.length} palabra${WORDS.length === 1 ? "" : "s"}`;
-        wordListEl.innerHTML = "";
-        if (WORDS.length === 0) {
-          wordListEl.innerHTML = `<div class="empty-msg">No hay palabras. Agregá al menos una.</div>`;
-          return;
+  function renderWordPanel(){
+    wordCountEl.textContent = `${WORDS.length} palabra${WORDS.length===1?'':'s'}`;
+    wordListEl.innerHTML = "";
+    if(WORDS.length === 0){
+      wordListEl.innerHTML = `<div class="empty-msg">No hay palabras. Agregá al menos una.</div>`;
+    } else {
+      WORDS.forEach((w, idx)=>{
+        const used = usedWords.includes(w);
+        const row = document.createElement('div');
+        row.className = "word-row" + (used ? " used" : "");
+        if(used){
+          row.innerHTML = `<span class="word-used">${escapeHtml(w)}</span><button class="del" data-idx="${idx}">✕</button>`;
+        } else {
+          row.innerHTML = `<input class="word-edit" data-idx="${idx}" maxlength="20" value="${w.replace(/"/g,'&quot;')}"><button class="del" data-idx="${idx}">✕</button>`;
         }
-        WORDS.forEach((w, idx) => {
-          const row = document.createElement("div");
-          row.className = "word-row";
-          row.innerHTML = `<input class="word-edit" data-idx="${idx}" maxlength="20" value="${w.replace(/"/g, "&quot;")}"><button class="del" data-idx="${idx}">✕</button>`;
-          wordListEl.appendChild(row);
+        wordListEl.appendChild(row);
+      });
+      wordListEl.querySelectorAll('.word-edit').forEach(inp=>{
+        const commit = ()=>{
+          const i = parseInt(inp.dataset.idx, 10);
+          const val = sanitizeWord(inp.value);
+          if(!val){ inp.value = WORDS[i]; return; } // no se permite dejar vacía
+          WORDS[i] = val.charAt(0).toUpperCase() + val.slice(1);
+          saveWords();
+        };
+        inp.addEventListener('blur', commit);
+        inp.addEventListener('keydown', (e)=>{
+          if(e.key === "Enter") inp.blur();
         });
-        wordListEl.querySelectorAll(".word-edit").forEach((inp) => {
-          const commit = () => {
-            const i = parseInt(inp.dataset.idx, 10);
-            const val = sanitizeWord(inp.value);
-            if (!val) {
-              inp.value = WORDS[i];
-              return;
-            } // no se permite dejar vacía
-            WORDS[i] = val.charAt(0).toUpperCase() + val.slice(1);
-            saveWords();
-          };
-          inp.addEventListener("blur", commit);
-          inp.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") inp.blur();
-          });
-        });
-        wordListEl.querySelectorAll(".del").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const i = parseInt(btn.dataset.idx, 10);
-            WORDS.splice(i, 1);
-            saveWords();
-            renderWordPanel();
-          });
-        });
-      }
-
-      function addWord() {
-        const val = sanitizeWord(newWordInput.value);
-        if (!val) return;
-        const exists = WORDS.some((w) => w.toLowerCase() === val.toLowerCase());
-        if (!exists) {
-          WORDS.push(val.charAt(0).toUpperCase() + val.slice(1));
+      });
+      wordListEl.querySelectorAll('.del').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const i = parseInt(btn.dataset.idx, 10);
+          WORDS.splice(i, 1);
           saveWords();
           renderWordPanel();
-        }
-        newWordInput.value = "";
-        newWordInput.focus();
-      }
-
-      function maxImpostorsFor(players) {
-        // Reglas de balance: la mayoría siempre debe ser tripulante
-        // 3-5 jugadores -> máx 1 impostor
-        // 6-7 jugadores -> máx 2 impostores
-        // 8-10 jugadores -> máx 3 impostores
-        if (players <= 5) return 1;
-        if (players <= 7) return 2;
-        return 3;
-      }
-
-      function clampImpostors() {
-        const max = maxImpostorsFor(TOTAL_PLAYERS);
-        if (IMPOSTOR_COUNT > max) IMPOSTOR_COUNT = max;
-        if (IMPOSTOR_COUNT < 1) IMPOSTOR_COUNT = 1;
-      }
-
-      async function saveConfig() {
-        if (!hasStorage) return;
-        try {
-          await window.storage.set(
-            "config",
-            JSON.stringify({ p: TOTAL_PLAYERS, i: IMPOSTOR_COUNT }),
-            false,
-          );
-        } catch (e) {}
-      }
-      async function loadConfig() {
-        if (!hasStorage) return;
-        try {
-          const res = await window.storage.get("config", false);
-          if (res && res.value) {
-            const c = JSON.parse(res.value);
-            if (c.p >= MIN_PLAYERS && c.p <= MAX_PLAYERS) TOTAL_PLAYERS = c.p;
-            if (c.i >= 1) IMPOSTOR_COUNT = c.i;
-            clampImpostors();
-          }
-        } catch (e) {}
-      }
-
-      function renderStepper() {
-        document.getElementById("playersVal").textContent = TOTAL_PLAYERS;
-        document.getElementById("impostorsVal").textContent = IMPOSTOR_COUNT;
-        document.getElementById("impostorRange").textContent =
-          `mínimo 1 · máximo ${maxImpostorsFor(TOTAL_PLAYERS)}`;
-        document.getElementById("playersMinus").disabled =
-          TOTAL_PLAYERS <= MIN_PLAYERS;
-        document.getElementById("playersPlus").disabled =
-          TOTAL_PLAYERS >= MAX_PLAYERS;
-        document.getElementById("impostorsMinus").disabled =
-          IMPOSTOR_COUNT <= 1;
-        document.getElementById("impostorsPlus").disabled =
-          IMPOSTOR_COUNT >= maxImpostorsFor(TOTAL_PLAYERS);
-      }
-
-      document.getElementById("playersMinus").addEventListener("click", () => {
-        if (TOTAL_PLAYERS > MIN_PLAYERS) {
-          TOTAL_PLAYERS--;
-          clampImpostors();
-          saveConfig();
-          renderStepper();
-          newGame();
-        }
-      });
-      document.getElementById("playersPlus").addEventListener("click", () => {
-        if (TOTAL_PLAYERS < MAX_PLAYERS) {
-          TOTAL_PLAYERS++;
-          saveConfig();
-          renderStepper();
-          newGame();
-        }
-      });
-      document
-        .getElementById("impostorsMinus")
-        .addEventListener("click", () => {
-          if (IMPOSTOR_COUNT > 1) {
-            IMPOSTOR_COUNT--;
-            saveConfig();
-            renderStepper();
-            newGame();
-          }
         });
-      document.getElementById("impostorsPlus").addEventListener("click", () => {
-        if (IMPOSTOR_COUNT < maxImpostorsFor(TOTAL_PLAYERS)) {
-          IMPOSTOR_COUNT++;
-          saveConfig();
-          renderStepper();
-          newGame();
-        }
       });
+    }
+    renderRouletteInfo();
+    renderHistory();
+  }
 
-      gearBtn.addEventListener("click", () => {
-        renderStepper();
-        renderWordPanel();
-        overlay.classList.add("open");
-      });
-      document.getElementById("closeBtn").addEventListener("click", () => {
-        overlay.classList.remove("open");
-      });
-      document.getElementById("addWordBtn").addEventListener("click", addWord);
-      newWordInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") addWord();
-      });
-      document.getElementById("restoreBtn").addEventListener("click", () => {
-        WORDS = [...DEFAULT_WORDS];
-        saveWords();
-        renderWordPanel();
-      });
+  function renderRouletteInfo(){
+    document.getElementById('rouletteCount').textContent =
+      `${usedWords.length}/${WORDS.length} usadas`;
+  }
 
-      let currentWord = "";
-      let assignments = []; // array de 4: "impostor" | "crew"
-      let turn = 0; // 0..3 -> jugador actual
-      let state = "ready"; // ready | countdown | reveal | final
-      let countVal = 3;
+  function renderHistory(){
+    const el = document.getElementById('histList');
+    if(roundHistory.length === 0){
+      el.innerHTML = `<div class="hist-empty">Todavía no se sorteó ninguna palabra.</div>`;
+      return;
+    }
+    el.innerHTML = roundHistory.map(h =>
+      `<div class="hist-row"><span class="hist-word">${escapeHtml(h.word)}</span><span class="hist-pattern">${patternHTML(h.pattern)}</span></div>`
+    ).join("");
+  }
 
-      function shuffle(arr) {
-        const a = [...arr];
-        for (let i = a.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [a[i], a[j]] = [a[j], a[i]];
-        }
-        return a;
-      }
+  function addWord(){
+    const val = sanitizeWord(newWordInput.value);
+    if(!val) return;
+    const exists = WORDS.some(w => w.toLowerCase() === val.toLowerCase());
+    if(!exists){
+      WORDS.push(val.charAt(0).toUpperCase() + val.slice(1));
+      saveWords();
+      renderWordPanel();
+    }
+    newWordInput.value = "";
+    newWordInput.focus();
+  }
 
-      function escapeHtml(str) {
-        const div = document.createElement("div");
-        div.textContent = str;
-        return div.innerHTML;
-      }
+  function maxImpostorsFor(players){
+    // Reglas de balance: la mayoría siempre debe ser tripulante
+    // 3-5 jugadores -> máx 1 impostor
+    // 6-7 jugadores -> máx 2 impostores
+    // 8-10 jugadores -> máx 3 impostores
+    if(players <= 5) return 1;
+    if(players <= 7) return 2;
+    return 3;
+  }
 
-      function sanitizeWord(raw) {
-        // saca tags/etiquetas y espacios de más, limita longitud igual que el input
-        return raw
-          .replace(/<[^>]*>/g, "")
-          .trim()
-          .slice(0, 20);
-      }
+  function clampImpostors(){
+    const max = maxImpostorsFor(TOTAL_PLAYERS);
+    if(IMPOSTOR_COUNT > max) IMPOSTOR_COUNT = max;
+    if(IMPOSTOR_COUNT < 1) IMPOSTOR_COUNT = 1;
+  }
 
-      function newGame() {
-        if (WORDS.length === 0) WORDS = [...DEFAULT_WORDS];
+  async function saveConfig(){
+    if(!hasStorage) return;
+    try{
+      await window.storage.set('config', JSON.stringify({p:TOTAL_PLAYERS, i:IMPOSTOR_COUNT}), false);
+    }catch(e){}
+  }
+  async function loadConfig(){
+    if(!hasStorage) return;
+    try{
+      const res = await window.storage.get('config', false);
+      if(res && res.value){
+        const c = JSON.parse(res.value);
+        if(c.p >= MIN_PLAYERS && c.p <= MAX_PLAYERS) TOTAL_PLAYERS = c.p;
+        if(c.i >= 1) IMPOSTOR_COUNT = c.i;
         clampImpostors();
-        currentWord = WORDS[Math.floor(Math.random() * WORDS.length)];
-        const roles = [];
-        for (let i = 0; i < IMPOSTOR_COUNT; i++) roles.push("impostor");
-        for (let i = 0; i < TOTAL_PLAYERS - IMPOSTOR_COUNT; i++)
-          roles.push("crew");
-        assignments = shuffle(roles);
-        turn = 0;
-        state = "ready";
-        render();
       }
+    }catch(e){}
+  }
 
-      function renderDots() {
-        dotsEl.innerHTML = "";
-        for (let i = 0; i < TOTAL_PLAYERS; i++) {
-          const d = document.createElement("div");
-          d.className = "dot";
-          if (i < turn) d.classList.add("filled");
-          else if (i === turn && state !== "final") d.classList.add("current");
-          dotsEl.appendChild(d);
-        }
+  function renderStepper(){
+    document.getElementById('playersVal').textContent = TOTAL_PLAYERS;
+    document.getElementById('impostorsVal').textContent = IMPOSTOR_COUNT;
+    document.getElementById('impostorRange').textContent =
+      `mínimo 1 · máximo ${maxImpostorsFor(TOTAL_PLAYERS)}`;
+    document.getElementById('playersMinus').disabled = TOTAL_PLAYERS <= MIN_PLAYERS;
+    document.getElementById('playersPlus').disabled = TOTAL_PLAYERS >= MAX_PLAYERS;
+    document.getElementById('impostorsMinus').disabled = IMPOSTOR_COUNT <= 1;
+    document.getElementById('impostorsPlus').disabled = IMPOSTOR_COUNT >= maxImpostorsFor(TOTAL_PLAYERS);
+  }
+
+  document.getElementById('playersMinus').addEventListener('click', ()=>{
+    if(TOTAL_PLAYERS > MIN_PLAYERS){ TOTAL_PLAYERS--; clampImpostors(); saveConfig(); renderStepper(); newGame(); renderWordPanel(); }
+  });
+  document.getElementById('playersPlus').addEventListener('click', ()=>{
+    if(TOTAL_PLAYERS < MAX_PLAYERS){ TOTAL_PLAYERS++; saveConfig(); renderStepper(); newGame(); renderWordPanel(); }
+  });
+  document.getElementById('impostorsMinus').addEventListener('click', ()=>{
+    if(IMPOSTOR_COUNT > 1){ IMPOSTOR_COUNT--; saveConfig(); renderStepper(); newGame(); renderWordPanel(); }
+  });
+  document.getElementById('impostorsPlus').addEventListener('click', ()=>{
+    if(IMPOSTOR_COUNT < maxImpostorsFor(TOTAL_PLAYERS)){ IMPOSTOR_COUNT++; saveConfig(); renderStepper(); newGame(); renderWordPanel(); }
+  });
+
+  gearBtn.addEventListener('click', ()=>{
+    renderStepper();
+    renderWordPanel();
+    overlay.classList.add('open');
+  });
+  document.getElementById('closeBtn').addEventListener('click', ()=>{
+    overlay.classList.remove('open');
+  });
+  document.getElementById('addWordBtn').addEventListener('click', addWord);
+  newWordInput.addEventListener('keydown', (e)=>{
+    if(e.key === "Enter") addWord();
+  });
+  document.getElementById('restoreBtn').addEventListener('click', ()=>{
+    WORDS = [...DEFAULT_WORDS];
+    saveWords();
+    renderWordPanel();
+  });
+  document.getElementById('rouletteBtn').addEventListener('click', resetRoulette);
+
+  let currentWord = "";
+  let assignments = []; // array de N: "impostor" | "crew"
+  let turn = 0;
+  let state = "ready";   // ready | countdown | reveal | final | exhausted
+  let countVal = 3;
+  let revealVal = 3;
+  let usedWords = [];    // palabras ya sorteadas en esta ruleta
+  let roundHistory = []; // [{word, pattern:[...assignments]}], más reciente primero
+
+  function shuffle(arr){
+    const a = [...arr];
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function sanitizeWord(raw){
+    // saca tags/etiquetas y espacios de más, limita longitud igual que el input
+    return raw.replace(/<[^>]*>/g, "").trim().slice(0, 20);
+  }
+
+  async function saveRoulette(){
+    if(!hasStorage) return;
+    try{
+      await window.storage.set('roulette', JSON.stringify({used:usedWords, history:roundHistory}), false);
+    }catch(e){}
+  }
+  async function loadRoulette(){
+    if(!hasStorage) return;
+    try{
+      const res = await window.storage.get('roulette', false);
+      if(res && res.value){
+        const r = JSON.parse(res.value);
+        if(Array.isArray(r.used)) usedWords = r.used;
+        if(Array.isArray(r.history)) roundHistory = r.history;
       }
+    }catch(e){}
+  }
 
-      function render() {
-        renderDots();
-        main.innerHTML = "";
+  function patternHTML(pattern){
+    return pattern.map(role =>
+      role === "impostor"
+        ? `<span class="pip imp">[x]</span>`
+        : `<span class="pip crew">[ ]</span>`
+    ).join("");
+  }
 
-        const lockGear = state === "countdown" || state === "reveal";
-        gearBtn.style.opacity = lockGear ? "0.25" : "1";
-        gearBtn.style.pointerEvents = lockGear ? "none" : "auto";
+  function newGame(){
+    if(WORDS.length === 0) WORDS = [...DEFAULT_WORDS];
+    clampImpostors();
 
-        if (state === "ready") {
-          const wrap = document.createElement("div");
-          wrap.innerHTML = `
+    // limpia usedWords de palabras que ya no existen en la lista (editadas/borradas)
+    usedWords = usedWords.filter(w => WORDS.includes(w));
+
+    const available = WORDS.filter(w => !usedWords.includes(w));
+    if(available.length === 0){
+      currentWord = null;
+      assignments = [];
+      turn = 0;
+      state = "exhausted";
+      render();
+      return;
+    }
+
+    currentWord = available[Math.floor(Math.random()*available.length)];
+    usedWords.push(currentWord);
+
+    const roles = [];
+    for(let i=0;i<IMPOSTOR_COUNT;i++) roles.push("impostor");
+    for(let i=0;i<TOTAL_PLAYERS-IMPOSTOR_COUNT;i++) roles.push("crew");
+    assignments = shuffle(roles);
+
+    roundHistory.unshift({ word: currentWord, pattern: [...assignments] });
+    saveRoulette();
+
+    turn = 0;
+    state = "ready";
+    render();
+  }
+
+  function resetRoulette(){
+    usedWords = [];
+    roundHistory = [];
+    saveRoulette();
+    newGame();
+    renderWordPanel();
+  }
+
+  function renderDots(){
+    dotsEl.innerHTML = "";
+    for(let i=0;i<TOTAL_PLAYERS;i++){
+      const d = document.createElement('div');
+      d.className = "dot";
+      if(i < turn) d.classList.add("filled");
+      else if(i === turn && state !== "final") d.classList.add("current");
+      dotsEl.appendChild(d);
+    }
+  }
+
+  function render(){
+    renderDots();
+    main.innerHTML = "";
+
+    const lockGear = (state === "countdown" || state === "reveal");
+    gearBtn.style.opacity = lockGear ? "0.25" : "1";
+    gearBtn.style.pointerEvents = lockGear ? "none" : "auto";
+
+    if(state === "ready"){
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `
         <div class="porthole pulse" id="porthole">
           <div class="porthole-inner">
             <div class="ready-icon">👆</div>
@@ -863,19 +757,18 @@
           </div>
         </div>
       `;
-          main.appendChild(wrap);
-          const hint = document.createElement("div");
-          hint.className = "hint";
-          hint.innerHTML =
-            turn === 0
-              ? `Jugador <b>${turn + 1}/${TOTAL_PLAYERS}</b>: tocá la pantalla y esperá el conteo.`
-              : `Dispositivo pasado. Jugador <b>${turn + 1}/${TOTAL_PLAYERS}</b>: tocá la pantalla.`;
-          main.appendChild(hint);
-          tapzone.style.pointerEvents = "auto";
-        }
+      main.appendChild(wrap);
+      const hint = document.createElement('div');
+      hint.className = "hint";
+      hint.innerHTML = turn === 0
+        ? `Jugador <b>${turn+1}/${TOTAL_PLAYERS}</b>: tocá la pantalla y esperá el conteo.`
+        : `Dispositivo pasado. Jugador <b>${turn+1}/${TOTAL_PLAYERS}</b>: tocá la pantalla.`;
+      main.appendChild(hint);
+      tapzone.style.pointerEvents = "auto";
+    }
 
-        if (state === "countdown") {
-          main.innerHTML = `
+    if(state === "countdown"){
+      main.innerHTML = `
         <div class="porthole">
           <div class="porthole-inner">
             <div class="count-num" id="countNum">${countVal}</div>
@@ -883,82 +776,100 @@
         </div>
         <div class="hint">No muestres la pantalla a nadie más...</div>
       `;
-          tapzone.style.pointerEvents = "none";
-        }
+      tapzone.style.pointerEvents = "none";
+    }
 
-        if (state === "reveal") {
-          const isImpostor = assignments[turn] === "impostor";
-          const modeClass = isImpostor ? "impostor-mode" : "crew-mode";
-          main.innerHTML = `
+    if(state === "reveal"){
+      const isImpostor = assignments[turn] === "impostor";
+      const modeClass = isImpostor ? "impostor-mode" : "crew-mode";
+      main.innerHTML = `
         <div class="porthole ${modeClass}">
           <div class="porthole-inner">
-            ${
-              isImpostor
-                ? `<div class="role-word">IMPOSTOR</div><div class="role-sub">no conocés la palabra</div>`
-                : `<div class="role-word">${escapeHtml(currentWord)}</div><div class="role-sub">tripulante</div>`
-            }
+            ${isImpostor
+              ? `<div class="role-word">IMPOSTOR</div><div class="role-sub">no conocés la palabra</div>`
+              : `<div class="role-word">${escapeHtml(currentWord)}</div><div class="role-sub">tripulante</div>`}
+            <div class="reveal-timer" id="revealTimer">${revealVal}</div>
           </div>
         </div>
-        <div class="hint">Memorizá tu rol. El mensaje se oculta solo.</div>
+        <div class="hint">Memorizá tu rol. Se oculta en <b id="hintTimer">${revealVal}</b>s...</div>
       `;
-          tapzone.style.pointerEvents = "none";
-        }
+      tapzone.style.pointerEvents = "none";
+    }
 
-        if (state === "final") {
-          main.innerHTML = `
+    if(state === "final"){
+      main.innerHTML = `
         <div class="final-title">DESCUBRANLO</div>
         <div class="final-sub">Todos ya conocen su rol. Empiecen a hablar y encuentren al impostor.</div>
-        <button class="reset" id="resetBtn">Reiniciar juego</button>
+        <div class="final-pattern">${escapeHtml(currentWord)}: ${patternHTML(assignments)}</div>
+        <button class="reset" id="resetBtn">Nueva ronda</button>
       `;
-          tapzone.style.pointerEvents = "none";
-          document
-            .getElementById("resetBtn")
-            .addEventListener("click", newGame);
-        }
-      }
+      tapzone.style.pointerEvents = "none";
+      document.getElementById('resetBtn').addEventListener('click', newGame);
+    }
 
-      let countdownActive = false;
+    if(state === "exhausted"){
+      main.innerHTML = `
+        <div class="final-title">🎉 SE ACABARON</div>
+        <div class="final-sub">Usaron las ${WORDS.length} palabras de la lista. Reiniciá la ruleta para volver a jugarlas todas.</div>
+        <button class="reset" id="rouletteBtn2">Reiniciar ruleta</button>
+      `;
+      tapzone.style.pointerEvents = "none";
+      document.getElementById('rouletteBtn2').addEventListener('click', resetRoulette);
+    }
+  }
 
-      function startCountdown() {
-        if (countdownActive) return;
-        countdownActive = true;
-        state = "countdown";
-        countVal = 3;
+  let countdownActive = false;
+
+  function startCountdown(){
+    if(countdownActive) return;
+    countdownActive = true;
+    state = "countdown";
+    countVal = 3;
+    render();
+    const iv = setInterval(()=>{
+      countVal--;
+      if(countVal > 0){
+        const el = document.getElementById('countNum');
+        if(el) el.textContent = countVal;
+      } else {
+        clearInterval(iv);
+        state = "reveal";
+        revealVal = 3;
         render();
-        const iv = setInterval(() => {
-          countVal--;
-          if (countVal > 0) {
-            const el = document.getElementById("countNum");
-            if (el) el.textContent = countVal;
-          } else {
-            clearInterval(iv);
-            state = "reveal";
+        const revealIv = setInterval(()=>{
+          revealVal--;
+          const rt = document.getElementById('revealTimer');
+          const ht = document.getElementById('hintTimer');
+          if(rt) rt.textContent = revealVal > 0 ? revealVal : "";
+          if(ht) ht.textContent = revealVal > 0 ? revealVal : "0";
+          if(revealVal <= 0){
+            clearInterval(revealIv);
+            turn++;
+            countdownActive = false;
+            if(turn >= TOTAL_PLAYERS){
+              state = "final";
+            } else {
+              state = "ready";
+            }
             render();
-            setTimeout(() => {
-              turn++;
-              countdownActive = false;
-              if (turn >= TOTAL_PLAYERS) {
-                state = "final";
-              } else {
-                state = "ready";
-              }
-              render();
-            }, 3000);
           }
         }, 1000);
       }
+    }, 1000);
+  }
 
-      tapzone.addEventListener("click", () => {
-        if (state === "ready" && !countdownActive) {
-          startCountdown();
-        }
-      });
+  tapzone.addEventListener('click', ()=>{
+    if(state === "ready" && !countdownActive){
+      startCountdown();
+    }
+  });
 
-      (async () => {
-        await loadWords();
-        await loadConfig();
-        newGame();
-      })();
-    </script>
-  </body>
+  (async ()=>{
+    await loadWords();
+    await loadConfig();
+    await loadRoulette();
+    newGame();
+  })();
+</script>
+</body>
 </html>

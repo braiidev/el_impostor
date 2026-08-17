@@ -204,6 +204,37 @@
     cursor:pointer;
   }
   .gear-btn:active{ transform:scale(.92); }
+  .gear-btn.help-btn{
+    left:16px; right:auto; font-weight:900; font-size:17px;
+  }
+
+  .welcome-text{
+    font-size:13.5px; color:var(--text); line-height:1.6;
+    text-align:left; display:flex; flex-direction:column; gap:10px;
+  }
+  .welcome-text b{ color:var(--gold); }
+  .welcome-text .role-tag{ font-weight:900; }
+  .welcome-text .role-tag.crew{ color:var(--crew); }
+  .welcome-text .role-tag.imp{ color:var(--impostor); }
+
+  .hist-header{
+    display:flex; align-items:center; justify-content:center;
+    gap:8px; position:relative;
+  }
+  .hist-header h2{ margin:0; }
+  .hist-toggle{
+    position:absolute; right:0;
+    width:30px; height:30px; border-radius:50%;
+    background:#0c1426; border:1.5px solid #263254; color:var(--muted);
+    font-size:14px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; user-select:none;
+  }
+  .hist-toggle.active{ border-color:var(--gold); color:var(--gold); }
+  .hist-list{ filter:blur(7px); transition:filter .15s ease; }
+  .hist-list.revealed{ filter:none; }
+
+  .final-pattern.blurred{ filter:blur(9px); }
+  .final-pattern{ transition:filter .35s ease; }
 
   /* Panel de palabras */
   .overlay{
@@ -363,6 +394,7 @@
   <div class="stars"></div>
 
   <button class="gear-btn" id="gearBtn" title="Palabras">⚙</button>
+  <button class="gear-btn help-btn" id="helpBtn" title="Cómo jugar">?</button>
 
   <header>
     <div class="title">EL <b>IMPOSTOR</b></div>
@@ -376,6 +408,22 @@
   <footer>PASÁ EL DISPOSITIVO SIN MOSTRAR LA PANTALLA</footer>
 
   <div class="tapzone" id="tapzone"></div>
+
+  <div class="overlay" id="welcomeOverlay">
+    <div class="panel">
+      <h2>¿Cómo se juega?</h2>
+      <div class="welcome-text">
+        <div>Un dispositivo pasa de mano en mano. En cada turno, tocá la pantalla y esperá el conteo antes de mirar tu rol, sin que nadie más vea.</div>
+        <div>Podés ser <span class="role-tag crew">TRIPULANTE</span> (conocés la palabra secreta) o <span class="role-tag imp">IMPOSTOR</span> (no la conocés y tenés que disimular).</div>
+        <div>Cuando todos vieron su rol, empiecen a hablar dando pistas de la palabra <b>sin decirla</b>. El impostor debe fingir que la sabe.</div>
+        <div>Terminada la ronda de a poco, discutan y voten quién creen que es el impostor.</div>
+        <div><b>¿Cómo se gana?</b> Los <span class="role-tag crew">TRIPULANTES</span> ganan si descubren al impostor. El <span class="role-tag imp">IMPOSTOR</span> gana si pasa desapercibido o si, al ser descubierto, adivina la palabra secreta.</div>
+      </div>
+      <div class="panel-actions">
+        <button class="btn-close" id="welcomeCloseBtn">Entendido</button>
+      </div>
+    </div>
+  </div>
 
   <div class="overlay" id="overlay">
     <div class="panel">
@@ -424,7 +472,10 @@
       </div>
 
       <div class="history-block" id="historyBlock">
-        <h2>Historial</h2>
+        <div class="hist-header">
+          <h2>Historial</h2>
+          <button class="hist-toggle" id="histToggle" title="Mantené presionado para ver">👁</button>
+        </div>
         <div class="hist-list" id="histList"></div>
       </div>
 
@@ -632,6 +683,46 @@
   });
   document.getElementById('rouletteBtn').addEventListener('click', resetRoulette);
 
+  // --- Bienvenida (persistente en localStorage) ---
+  const WELCOME_KEY = 'impostor_welcome_seen';
+  const welcomeOverlay = document.getElementById('welcomeOverlay');
+  const helpBtn = document.getElementById('helpBtn');
+  function hasSeenWelcome(){
+    try{ return localStorage.getItem(WELCOME_KEY) === '1'; }catch(e){ return false; }
+  }
+  function markWelcomeSeen(){
+    try{ localStorage.setItem(WELCOME_KEY, '1'); }catch(e){}
+  }
+  document.getElementById('welcomeCloseBtn').addEventListener('click', ()=>{
+    welcomeOverlay.classList.remove('open');
+    markWelcomeSeen();
+  });
+  helpBtn.addEventListener('click', ()=>{
+    welcomeOverlay.classList.add('open');
+  });
+  if(!hasSeenWelcome()){
+    welcomeOverlay.classList.add('open');
+  }
+
+  // --- Toggle "mantener presionado" del historial ---
+  const histToggle = document.getElementById('histToggle');
+  const histListEl = document.getElementById('histList');
+  function revealHist(e){
+    if(e) e.preventDefault();
+    histListEl.classList.add('revealed');
+    histToggle.classList.add('active');
+  }
+  function hideHist(){
+    histListEl.classList.remove('revealed');
+    histToggle.classList.remove('active');
+  }
+  histToggle.addEventListener('mousedown', revealHist);
+  histToggle.addEventListener('touchstart', revealHist, {passive:false});
+  histToggle.addEventListener('mouseup', hideHist);
+  histToggle.addEventListener('mouseleave', hideHist);
+  histToggle.addEventListener('touchend', hideHist);
+  histToggle.addEventListener('touchcancel', hideHist);
+
   let currentWord = "";
   let assignments = []; // array de N: "impostor" | "crew"
   let turn = 0;
@@ -682,8 +773,8 @@
   function patternHTML(pattern){
     return pattern.map(role =>
       role === "impostor"
-        ? `<span class="pip imp">[x]</span>`
-        : `<span class="pip crew">[ ]</span>`
+        ? `<span class="pip imp">🧍</span>`
+        : `<span class="pip crew">🧍</span>`
     ).join("");
   }
 
@@ -800,11 +891,12 @@
       main.innerHTML = `
         <div class="final-title">DESCUBRANLO</div>
         <div class="final-sub">Todos ya conocen su rol. Empiecen a hablar y encuentren al impostor.</div>
-        <div class="final-pattern">${escapeHtml(currentWord)}: ${patternHTML(assignments)}</div>
+        <div class="final-pattern blurred" id="finalPattern">${escapeHtml(currentWord)}: ${patternHTML(assignments)}</div>
         <button class="reset" id="resetBtn">Nueva ronda</button>
+        <div class="hint" id="revealHint" style="display:none;"></div>
       `;
       tapzone.style.pointerEvents = "none";
-      document.getElementById('resetBtn').addEventListener('click', newGame);
+      document.getElementById('resetBtn').addEventListener('click', revealThenNewGame);
     }
 
     if(state === "exhausted"){
@@ -816,6 +908,28 @@
       tapzone.style.pointerEvents = "none";
       document.getElementById('rouletteBtn2').addEventListener('click', resetRoulette);
     }
+  }
+
+  function revealThenNewGame(){
+    const fp = document.getElementById('finalPattern');
+    const btn = document.getElementById('resetBtn');
+    const rh = document.getElementById('revealHint');
+    if(fp) fp.classList.remove('blurred');
+    if(btn) btn.style.display = 'none';
+    let n = 3;
+    if(rh){
+      rh.style.display = 'block';
+      rh.innerHTML = `Nueva ronda en <b>${n}</b>...`;
+    }
+    const iv = setInterval(()=>{
+      n--;
+      if(n > 0){
+        if(rh) rh.innerHTML = `Nueva ronda en <b>${n}</b>...`;
+      } else {
+        clearInterval(iv);
+        newGame();
+      }
+    }, 1000);
   }
 
   let countdownActive = false;

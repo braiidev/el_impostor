@@ -353,6 +353,35 @@
     min-height:14px;
   }
 
+  .player-list{
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .player-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:#0c1426; border:1px solid #202b48;
+    border-radius:10px; padding:4px 6px 4px 12px;
+    font-size:14px; font-weight:600;
+    gap:6px;
+  }
+  .player-row.locked{ border-color:var(--crew); }
+  .player-row .player-edit{
+    flex:1; min-width:0; background:transparent; border:none; outline:none;
+    color:var(--text); font-size:14px; font-weight:600;
+    font-family:inherit; padding:8px 4px;
+  }
+  .player-row .player-edit:focus{ color:var(--crew); }
+  .lock-btn{
+    background:none; border:1.5px solid #263254; color:var(--muted);
+    font-size:14px; border-radius:8px; cursor:pointer;
+    padding:6px 8px; white-space:nowrap; flex-shrink:0;
+  }
+  .lock-btn.on{
+    background:var(--crew-glow); border-color:var(--crew); color:var(--crew);
+  }
+  .lock-hint{
+    font-size:11px; color:var(--muted); text-align:center; margin-top:-4px;
+  }
+
   .roulette-row{
     display:flex; align-items:center; justify-content:space-between;
     gap:12px; padding-bottom:6px; border-bottom:1px solid #1c2843;
@@ -455,6 +484,10 @@
         <div class="stepper-hint" id="stepperHint"></div>
       </div>
 
+      <h2>Nombres</h2>
+      <div class="lock-hint">Tocá el candado 🔒 para que ese jugador sea <b>siempre tripulante</b></div>
+      <div class="player-list" id="playerList"></div>
+
       <div class="roulette-row">
         <div class="stepper-label">
           <span>Ruleta</span>
@@ -502,6 +535,21 @@
   const MIN_PLAYERS = 3, MAX_PLAYERS = 10;
   let TOTAL_PLAYERS = 4;
   let IMPOSTOR_COUNT = 1;
+  let PLAYER_NAMES = [];   // nombre por jugador, índice = identidad del jugador
+  let PLAYER_LOCKED = [];  // true = ese jugador nunca puede ser impostor (siempre tripulante)
+
+  function defaultName(i){ return `Jugador ${i+1}`; }
+
+  function syncPlayerArrays(){
+    while(PLAYER_NAMES.length < TOTAL_PLAYERS) PLAYER_NAMES.push(defaultName(PLAYER_NAMES.length));
+    while(PLAYER_LOCKED.length < TOTAL_PLAYERS) PLAYER_LOCKED.push(false);
+    PLAYER_NAMES.length = TOTAL_PLAYERS;
+    PLAYER_LOCKED.length = TOTAL_PLAYERS;
+    for(let i=0;i<TOTAL_PLAYERS;i++){
+      if(!PLAYER_NAMES[i]) PLAYER_NAMES[i] = defaultName(i);
+      if(typeof PLAYER_LOCKED[i] !== "boolean") PLAYER_LOCKED[i] = false;
+    }
+  }
   const main = document.getElementById('main');
   const tapzone = document.getElementById('tapzone');
   const dotsEl = document.getElementById('dots');
@@ -588,7 +636,7 @@
       return;
     }
     el.innerHTML = roundHistory.map(h =>
-      `<div class="hist-row"><span class="hist-word">${escapeHtml(h.word)}</span><span class="hist-pattern">${patternHTML(h.pattern)}</span></div>`
+      `<div class="hist-row"><span class="hist-word">${escapeHtml(h.word)}</span><span class="hist-pattern">${patternHTML(h.pattern, h.names)}</span></div>`
     ).join("");
   }
 
@@ -616,7 +664,9 @@
   }
 
   function clampImpostors(){
-    const max = maxImpostorsFor(TOTAL_PLAYERS);
+    syncPlayerArrays();
+    const nonLocked = TOTAL_PLAYERS - lockedCount();
+    const max = Math.min(maxImpostorsFor(TOTAL_PLAYERS), Math.max(nonLocked, 0));
     if(IMPOSTOR_COUNT > max) IMPOSTOR_COUNT = max;
     if(IMPOSTOR_COUNT < 1) IMPOSTOR_COUNT = 1;
   }
@@ -640,32 +690,104 @@
     }catch(e){}
   }
 
+  async function savePlayers(){
+    if(!hasStorage) return;
+    try{
+      await window.storage.set('players', JSON.stringify({names:PLAYER_NAMES, locked:PLAYER_LOCKED}), false);
+    }catch(e){}
+  }
+  async function loadPlayers(){
+    if(!hasStorage) return;
+    try{
+      const res = await window.storage.get('players', false);
+      if(res && res.value){
+        const p = JSON.parse(res.value);
+        if(Array.isArray(p.names)) PLAYER_NAMES = p.names;
+        if(Array.isArray(p.locked)) PLAYER_LOCKED = p.locked;
+      }
+    }catch(e){}
+    syncPlayerArrays();
+  }
+
+  function lockedCount(){
+    return PLAYER_LOCKED.slice(0, TOTAL_PLAYERS).filter(Boolean).length;
+  }
+
+  function renderPlayerPanel(){
+    syncPlayerArrays();
+    const el = document.getElementById('playerList');
+    el.innerHTML = "";
+    for(let i=0;i<TOTAL_PLAYERS;i++){
+      const row = document.createElement('div');
+      row.className = "player-row" + (PLAYER_LOCKED[i] ? " locked" : "");
+      row.innerHTML = `
+        <input class="player-edit" data-idx="${i}" maxlength="16" value="${PLAYER_NAMES[i].replace(/"/g,'&quot;')}">
+        <button class="lock-btn ${PLAYER_LOCKED[i] ? "on" : ""}" data-idx="${i}" title="Siempre tripulante">${PLAYER_LOCKED[i] ? "🔒 Siempre tripulante" : "🔓"}</button>
+      `;
+      el.appendChild(row);
+    }
+    el.querySelectorAll('.player-edit').forEach(inp=>{
+      const commit = ()=>{
+        const i = parseInt(inp.dataset.idx, 10);
+        const val = sanitizeWord(inp.value).slice(0, 16);
+        PLAYER_NAMES[i] = val || defaultName(i);
+        inp.value = PLAYER_NAMES[i];
+        savePlayers();
+      };
+      inp.addEventListener('blur', commit);
+      inp.addEventListener('keydown', (e)=>{ if(e.key === "Enter") inp.blur(); });
+    });
+    el.querySelectorAll('.lock-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const i = parseInt(btn.dataset.idx, 10);
+        PLAYER_LOCKED[i] = !PLAYER_LOCKED[i];
+        savePlayers();
+        clampImpostors();
+        renderStepper();
+        renderPlayerPanel();
+        newGame();
+      });
+    });
+  }
+
   function renderStepper(){
+    syncPlayerArrays();
+    const nonLocked = TOTAL_PLAYERS - lockedCount();
+    const effMax = Math.min(maxImpostorsFor(TOTAL_PLAYERS), Math.max(nonLocked, 0));
     document.getElementById('playersVal').textContent = TOTAL_PLAYERS;
     document.getElementById('impostorsVal').textContent = IMPOSTOR_COUNT;
     document.getElementById('impostorRange').textContent =
-      `mínimo 1 · máximo ${maxImpostorsFor(TOTAL_PLAYERS)}`;
+      `mínimo 1 · máximo ${effMax}`;
     document.getElementById('playersMinus').disabled = TOTAL_PLAYERS <= MIN_PLAYERS;
     document.getElementById('playersPlus').disabled = TOTAL_PLAYERS >= MAX_PLAYERS;
     document.getElementById('impostorsMinus').disabled = IMPOSTOR_COUNT <= 1;
-    document.getElementById('impostorsPlus').disabled = IMPOSTOR_COUNT >= maxImpostorsFor(TOTAL_PLAYERS);
+    document.getElementById('impostorsPlus').disabled = IMPOSTOR_COUNT >= effMax;
+    const hintEl = document.getElementById('stepperHint');
+    if(lockedCount() > 0){
+      hintEl.textContent = `${lockedCount()} jugador(es) marcado(s) como siempre tripulante.`;
+    } else {
+      hintEl.textContent = "";
+    }
   }
 
   document.getElementById('playersMinus').addEventListener('click', ()=>{
-    if(TOTAL_PLAYERS > MIN_PLAYERS){ TOTAL_PLAYERS--; clampImpostors(); saveConfig(); renderStepper(); newGame(); renderWordPanel(); }
+    if(TOTAL_PLAYERS > MIN_PLAYERS){ TOTAL_PLAYERS--; syncPlayerArrays(); clampImpostors(); saveConfig(); savePlayers(); renderStepper(); renderPlayerPanel(); newGame(); renderWordPanel(); }
   });
   document.getElementById('playersPlus').addEventListener('click', ()=>{
-    if(TOTAL_PLAYERS < MAX_PLAYERS){ TOTAL_PLAYERS++; saveConfig(); renderStepper(); newGame(); renderWordPanel(); }
+    if(TOTAL_PLAYERS < MAX_PLAYERS){ TOTAL_PLAYERS++; syncPlayerArrays(); saveConfig(); savePlayers(); renderStepper(); renderPlayerPanel(); newGame(); renderWordPanel(); }
   });
   document.getElementById('impostorsMinus').addEventListener('click', ()=>{
     if(IMPOSTOR_COUNT > 1){ IMPOSTOR_COUNT--; saveConfig(); renderStepper(); newGame(); renderWordPanel(); }
   });
   document.getElementById('impostorsPlus').addEventListener('click', ()=>{
-    if(IMPOSTOR_COUNT < maxImpostorsFor(TOTAL_PLAYERS)){ IMPOSTOR_COUNT++; saveConfig(); renderStepper(); newGame(); renderWordPanel(); }
+    const nonLocked = TOTAL_PLAYERS - lockedCount();
+    const effMax = Math.min(maxImpostorsFor(TOTAL_PLAYERS), Math.max(nonLocked, 0));
+    if(IMPOSTOR_COUNT < effMax){ IMPOSTOR_COUNT++; saveConfig(); renderStepper(); newGame(); renderWordPanel(); }
   });
 
   gearBtn.addEventListener('click', ()=>{
     renderStepper();
+    renderPlayerPanel();
     renderWordPanel();
     overlay.classList.add('open');
   });
@@ -724,7 +846,8 @@
   histToggle.addEventListener('touchcancel', hideHist);
 
   let currentWord = "";
-  let assignments = []; // array de N: "impostor" | "crew"
+  let assignments = []; // array de N (índice = jugador): "impostor" | "crew"
+  let turnOrder = [];   // permutación de índices de jugadores: orden en que pasan el dispositivo
   let turn = 0;
   let state = "ready";   // ready | countdown | reveal | final | exhausted
   let countVal = 3;
@@ -770,12 +893,14 @@
     }catch(e){}
   }
 
-  function patternHTML(pattern){
-    return pattern.map(role =>
-      role === "impostor"
+  function patternHTML(pattern, names){
+    return pattern.map((role, idx) => {
+      const label = names && names[idx] ? `<span style="font-size:10px;">${escapeHtml(names[idx])}</span>` : "";
+      const icon = role === "impostor"
         ? `<span class="pip imp">🧍</span>`
-        : `<span class="pip crew">🧍‍♂️</span>`
-    ).join("");
+        : `<span class="pip crew">🧍‍♂️</span>`;
+      return names ? `<span style="display:inline-flex; flex-direction:column; align-items:center; margin:0 4px;">${icon}${label}</span>` : icon;
+    }).join("");
   }
 
   function newGame(){
@@ -798,12 +923,21 @@
     currentWord = available[Math.floor(Math.random()*available.length)];
     usedWords.push(currentWord);
 
-    const roles = [];
-    for(let i=0;i<IMPOSTOR_COUNT;i++) roles.push("impostor");
-    for(let i=0;i<TOTAL_PLAYERS-IMPOSTOR_COUNT;i++) roles.push("crew");
-    assignments = shuffle(roles);
+    syncPlayerArrays();
 
-    roundHistory.unshift({ word: currentWord, pattern: [...assignments] });
+    // asignación por identidad de jugador, respetando bloqueados (siempre tripulante)
+    const eligibleIdx = [];
+    for(let i=0;i<TOTAL_PLAYERS;i++) if(!PLAYER_LOCKED[i]) eligibleIdx.push(i);
+    let impostorCount = Math.min(IMPOSTOR_COUNT, eligibleIdx.length);
+    const impostorIdx = shuffle(eligibleIdx).slice(0, impostorCount);
+
+    assignments = new Array(TOTAL_PLAYERS).fill("crew");
+    impostorIdx.forEach(i => { assignments[i] = "impostor"; });
+
+    // orden aleatorio en que se pasa el dispositivo en esta ronda
+    turnOrder = shuffle([...Array(TOTAL_PLAYERS).keys()]);
+
+    roundHistory.unshift({ word: currentWord, pattern: turnOrder.map(i => assignments[i]), names: turnOrder.map(i => PLAYER_NAMES[i]) });
     saveRoulette();
 
     turn = 0;
@@ -849,19 +983,22 @@
         </div>
       `;
       main.appendChild(wrap);
+      const currentName = escapeHtml(PLAYER_NAMES[turnOrder[turn]] || `Jugador ${turn+1}`);
       const hint = document.createElement('div');
       hint.className = "hint";
       hint.innerHTML = turn === 0
-        ? `Jugador <b>${turn+1}/${TOTAL_PLAYERS}</b>: tocá la pantalla y esperá el conteo.`
-        : `Dispositivo pasado. Jugador <b>${turn+1}/${TOTAL_PLAYERS}</b>: tocá la pantalla.`;
+        ? `Le toca a <b>${currentName}</b> (${turn+1}/${TOTAL_PLAYERS}): tocá la pantalla y esperá el conteo.`
+        : `Dispositivo pasado. Le toca a <b>${currentName}</b> (${turn+1}/${TOTAL_PLAYERS}): tocá la pantalla.`;
       main.appendChild(hint);
       tapzone.style.pointerEvents = "auto";
     }
 
     if(state === "countdown"){
+      const currentName = escapeHtml(PLAYER_NAMES[turnOrder[turn]] || `Jugador ${turn+1}`);
       main.innerHTML = `
         <div class="porthole">
           <div class="porthole-inner">
+            <div class="ready-txt" style="margin-bottom:4px;">PREPARATE, <b style="color:var(--text)">${currentName}</b></div>
             <div class="count-num" id="countNum">${countVal}</div>
           </div>
         </div>
@@ -871,7 +1008,8 @@
     }
 
     if(state === "reveal"){
-      const isImpostor = assignments[turn] === "impostor";
+      const playerIdx = turnOrder[turn];
+      const isImpostor = assignments[playerIdx] === "impostor";
       const modeClass = isImpostor ? "impostor-mode" : "crew-mode";
       main.innerHTML = `
         <div class="porthole ${modeClass}">
@@ -882,7 +1020,7 @@
             <div class="reveal-timer" id="revealTimer">${revealVal}</div>
           </div>
         </div>
-        <div class="hint">Memorizá tu rol. Se oculta en <b id="hintTimer">${revealVal}</b>s...</div>
+        <div class="hint">Memorizá tu rol, <b>${escapeHtml(PLAYER_NAMES[playerIdx])}</b>. Se oculta en <b id="hintTimer">${revealVal}</b>s...</div>
       `;
       tapzone.style.pointerEvents = "none";
     }
@@ -891,7 +1029,7 @@
       main.innerHTML = `
         <div class="final-title">DESCUBRANLO</div>
         <div class="final-sub">Todos ya conocen su rol. Empiecen a hablar y encuentren al impostor.</div>
-        <div class="final-pattern blurred" id="finalPattern">${escapeHtml(currentWord)}: ${patternHTML(assignments)}</div>
+        <div class="final-pattern blurred" id="finalPattern">${escapeHtml(currentWord)}: ${patternHTML(turnOrder.map(i=>assignments[i]), turnOrder.map(i=>PLAYER_NAMES[i]))}</div>
         <button class="reset" id="resetBtn">Nueva ronda</button>
         <div class="hint" id="revealHint" style="display:none;"></div>
       `;
@@ -981,6 +1119,8 @@
   (async ()=>{
     await loadWords();
     await loadConfig();
+    await loadPlayers();
+    clampImpostors();
     await loadRoulette();
     newGame();
   })();
